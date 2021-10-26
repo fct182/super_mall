@@ -19,6 +19,7 @@ export default {
   data() {
     return {
       scroll: null,
+      saveY: 0,
     };
   },
   props: {
@@ -54,13 +55,16 @@ export default {
       // 2. 监听滚动的位置
       this.scroll.on("scroll", (position) => {
         // console.log(position);
+        this.saveY = position.y;
         this.$emit("scrollHeight", position.y);
       });
       // 3. 监听上拉加载
-      this.scroll.on("pullingUp", () => {
-        // console.log("上拉加载更多");
-        this.$emit("loadMore");
-      });
+      if (this.pullUpLoad) {
+        this.scroll.on("pullingUp", () => {
+          // console.log("上拉加载更多");
+          this.$emit("loadMore");
+        });
+      }
     },
     scrollTo(x, y, time = 300) {
       this.scroll.scrollTo(x, y, time);

@@ -6,6 +6,14 @@
         <div>购物街</div>
       </template>
     </NavBar>
+    <!-- 下拉选择栏悬浮组件 -->
+    <TabControl
+      @tabClick="tabClick"
+      :titles="titles"
+      ref="TabControl1"
+      class="tab-control"
+      v-show="isTabFix"
+    />
     <!-- 使用 better-scroll 包裹 -->
     <Scroll
       class="content"
@@ -28,7 +36,7 @@
       <!-- 本周流行 -->
       <FeatureView />
       <!-- 选项栏控制组件 -->
-      <TabControl @tabClick="tabClick" class="tab-control" :titles="titles" />
+      <TabControl @tabClick="tabClick" :titles="titles" ref="TabControl2" />
       <!-- 商品列表数据 -->
       <GoodsList :goods="goodsList" />
     </Scroll>
@@ -64,10 +72,11 @@ export default {
   },
   data() {
     return {
-      banners: [],
-      recommends: [],
-      titles: ["流行", "新款", "精选"],
+      banners: [], //轮播图
+      recommends: [], // 推荐
+      titles: ["流行", "新款", "精选"], // TabControl的文字
       goods: {
+        // 商品数据
         pop: {
           page: 0,
           list: [],
@@ -85,6 +94,9 @@ export default {
       probeType: 2, // 监听 上拉位置变化
       backTopImg: false, // 是否显示上拉图片
       pullUpLoad: true, //是否上拉加载更多
+      tabOffsetTop: 0, //  TabControl相较域父元素的偏移
+      isTabFix: false, // 控制 tabcontrol 停靠
+      saveY: 0, // 保存当前浏览位置
     };
   },
   computed: {
@@ -100,6 +112,21 @@ export default {
     this.getHomeGoods("pop");
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
+  },
+  mounted() {
+    // 为 tabOffsetTop 赋值，所有组件都有 $el 属性
+    setTimeout(() => {
+      // console.log(this.$refs.TabControl2.$el.offsetTop);
+      this.tabOffsetTop = this.$refs.TabControl2.$el.offsetTop;
+    }, 500);
+  },
+  activated() {
+    // 设置浏览高度
+    this.$refs.scroll_view.scrollTo(0, this.saveY, 10);
+  },
+  deactivated() {
+    // 离开首页保存当前浏览高度
+    this.saveY = this.$refs.scroll_view.saveY;
   },
   methods: {
     // 获取 轮播图＋推荐信息
@@ -123,15 +150,22 @@ export default {
     // 标签页点击切换
     tabClick(ind) {
       this.currentType = Object.keys(this.goods)[ind];
+      // 使前后两个 TabControl 保持一致
+      this.$refs.TabControl1.currentIndex = ind;
+      this.$refs.TabControl2.currentIndex = ind;
     },
     // 返回顶部
     backTop() {
       this.$refs.scroll_view.scrollTo(0, 0, 500);
       this.backTopImg = false;
     },
-    // 控制 返回顶部 按钮的显示与隐藏
+    // 监听首页滚动事件
     scrollHeight(val) {
+      // 1. 控制 返回顶部（backTop）按钮的显示与隐藏
       this.backTopImg = val < -900;
+      // 2. 控制 TabControl 悬浮停靠
+      // console.log(val);
+      this.isTabFix = -val > this.tabOffsetTop;
     },
     // 上拉加载更多
     loadMore() {
@@ -145,19 +179,20 @@ export default {
 .home-nav {
   background-color: var(--color-tint);
   color: #fff;
-  position: fixed;
+
+  /* 使用原生滚动时生效，但此处使用的是Better-Scroll */
+  /* position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 9;
+  z-index: 9; */
 }
 #home {
   height: 100vh;
   position: relative;
 }
 .tab-control {
-  position: sticky;
-  top: 44px;
+  position: relative;
   z-index: 9;
 }
 .content {
