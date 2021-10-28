@@ -28,3 +28,4 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 #### 插件
 1. axios
 2. better-scroll
+3. 自定义个小插件--Toast

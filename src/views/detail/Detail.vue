@@ -29,7 +29,9 @@
       <GoodsList ref="recommend" :goods="recommendInfo" />
     </Scroll>
     <!-- 底部工具栏 -->
-    <DetailBottomBar />
+    <DetailBottomBar @addCart="addCart" />
+    <!-- 返回顶部组件 -->
+    <BackTop @click.native="backTop" v-show="backTopImg" />
   </div>
 </template>
 
@@ -45,6 +47,7 @@ import DetailBottomBar from "./childComp/DetailBottomBar.vue";
 
 import Scroll from "@/components/common/scroll/Scroll.vue";
 import GoodsList from "@/components/content/goods/GoodsList.vue";
+import BackTop from "@/components/content/backTop/BackTop.vue";
 
 import { getDetail, getRecommend } from "@/api/index.js";
 export default {
@@ -60,6 +63,7 @@ export default {
     DetailCommentInfo,
     GoodsList,
     DetailBottomBar,
+    BackTop,
   },
   data() {
     return {
@@ -73,7 +77,8 @@ export default {
       commentInfo: {}, // 评论信息
       recommendInfo: [], // 推荐商品
       themeTopY: [], // NavBar 各个主题对应的高度
-      currentNavbar: 0,
+      currentNavbar: 0, // 当前滑动位置属于NavBar标题哪部分
+      backTopImg: false, // 当前是否显示返回顶部按钮
     };
   },
   created() {
@@ -112,14 +117,16 @@ export default {
     });
   },
   mounted() {
-    setTimeout(() => {
-      // 设置 头部点击导航
-      this.themeTopY.push(0);
-      this.themeTopY.push(this.$refs.params.$el.offsetTop - 44);
-      this.themeTopY.push(this.$refs.comment.$el.offsetTop - 44);
-      this.themeTopY.push(this.$refs.recommend.$el.offsetTop - 44);
-      console.log(this.themeTopY);
-    }, 1500);
+    this.$nextTick(() => {
+      setTimeout(() => {
+        // 设置 头部点击导航
+        this.themeTopY.push(0);
+        this.themeTopY.push(this.$refs.params.$el.offsetTop - 44);
+        this.themeTopY.push(this.$refs.comment.$el.offsetTop - 44);
+        this.themeTopY.push(this.$refs.recommend.$el.offsetTop - 44);
+        // console.log(this.themeTopY);
+      }, 2000);
+    });
   },
   methods: {
     // 处理商品基础信息
@@ -158,8 +165,9 @@ export default {
     detailNavClick(val) {
       this.$refs.detail_scroll.scrollTo(0, -this.themeTopY[val], 500);
     },
-    // 设置 NavBar 随着页面滚动 动态使标题变红
+    // 监听页面向上滚动
     scrollHeight(y) {
+      // 1. 设置 NavBar 随着页面滚动 动态区分当前所处分类
       const positionY = -y;
       for (let i in this.themeTopY) {
         if (
@@ -174,6 +182,30 @@ export default {
           }
         }
       }
+      // 2. 监听是否显示返回顶部
+      this.backTopImg = y < -900;
+    },
+    // 返回顶部
+    backTop() {
+      this.$refs.detail_scroll.scrollTo(0, 0, 500);
+    },
+    // 添加购物车
+    addCart() {
+      // 1. 获取购物车需要展示的商品信息
+      const product = {
+        iid: this.iid,
+        image: this.detailBanner[0],
+        title: this.goods.title,
+        desc: this.goods.desc,
+        price: this.goods.realPrice,
+        count: 1, // 商品数量
+        checked: true, // 购物车中是否选中
+      };
+      // 2. 将商品添加到购物车
+      this.$store.dispatch("addCart", product).then((res) => {
+        // 3. 展示 Toast 消息提示框
+        this.$toast.show(res, 2000);
+      });
     },
   },
 };

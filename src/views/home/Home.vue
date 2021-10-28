@@ -91,7 +91,7 @@ export default {
         },
       },
       currentType: "pop",
-      probeType: 2, // 监听 上拉位置变化
+      probeType: 3, // 监听 上拉位置变化
       backTopImg: false, // 是否显示上拉图片
       pullUpLoad: true, //是否上拉加载更多
       tabOffsetTop: 0, //  TabControl相较域父元素的偏移
